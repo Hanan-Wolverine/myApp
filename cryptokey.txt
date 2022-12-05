@@ -1,0 +1,203 @@
+----Certificate Creating----
+Openssl genrsa -des3 -out server.key 2048
+Openssl req -new -key server.key -sha256 -out server.csr
+Openssl x509 -req -days 365 -in server.csr -signkey server.key -sha256 -out server.crt
+
+
+---------login_process.php-------------
+
+<?php
+
+$server="localhost";
+$db_username="root";
+$db_password="";
+$db_name="users";
+
+$conn = new mysqli($server,$db_username,$db_password,$db_name);
+
+
+$username=$_POST['username'];
+$password=$_POST['password'];
+
+
+$sql = "SELECT * FROM logins WHERE username='".$username."' AND password='".$password."'";
+
+$results = $conn->query($sql);
+
+$count=mysqli_num_rows($results);
+
+     
+if($count>0) {
+       
+    header('Location: main.php');
+}else 
+{
+    echo 'username or password is incorrect';
+    }
+
+?>
+
+
+-----------login.php------------
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
+    <meta name="generator" content="Hugo 0.101.0">
+    <title>Signin Template · Bootstrap v5.2</title>
+
+    <link rel="canonical" href="https://getbootstrap.com/docs/5.2/examples/sign-in/">
+
+<link href="assets/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+
+      .b-example-divider {
+        height: 3rem;
+        background-color: rgba(0, 0, 0, .1);
+        border: solid rgba(0, 0, 0, .15);
+        border-width: 1px 0;
+        box-shadow: inset 0 .5em 1.5em rgba(0, 0, 0, .1), inset 0 .125em .5em rgba(0, 0, 0, .15);
+      }
+
+      .b-example-vr {
+        flex-shrink: 0;
+        width: 1.5rem;
+        height: 100vh;
+      }
+
+      .bi {
+        vertical-align: -.125em;
+        fill: currentColor;
+      }
+
+      .nav-scroller {
+        position: relative;
+        z-index: 2;
+        height: 2.75rem;
+        overflow-y: hidden;
+      }
+
+      .nav-scroller .nav {
+        display: flex;
+        flex-wrap: nowrap;
+        padding-bottom: 1rem;
+        margin-top: -1px;
+        overflow-x: auto;
+        text-align: center;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+      }
+    </style>
+    <script src="https://www.google.com/recaptcha/api.js"></script>
+    
+    <!-- Custom styles for this template -->
+    <link href="signin.css" rel="stylesheet">
+  </head>
+  <body class="text-center">
+    
+<main class="form-signin w-100 m-auto">
+
+<form action="login_process.php" method="post">
+
+    <img class="mb-4" src="assets/brand/bootstrap-logo.svg" alt="" width="72" height="57">
+    <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
+
+    <div class="form-floating">
+      <input type="text" name="username" class="form-control" id="floatingInput" placeholder="username">
+      <label for="floatingInput">username</label>
+    </div>
+    <div class="form-floating">
+      <input type="password" name="password" class="form-control" id="floatingPassword" placeholder="Password">
+      <label for="floatingPassword">Password</label>
+    </div>
+
+
+    <div class="g-recaptcha" data-sitekey="6LfasFMjAAAAAAnus7PO9pEx-ffZgxijhjyeZD6U"></div>
+
+
+    <div class="checkbox mb-3">
+      <label>
+        <input type="checkbox" value="remember-me"> Remember me
+      </label>
+    </div>
+    <button class="w-100 btn btn-lg btn-primary" type="submit">Sign in</button>
+    <p class="mt-5 mb-3 text-muted">&copy; 2022</p>
+
+  </form>
+</main>
+
+    </form>
+    
+  </body>
+</html>
+
+
+
+
+
+---------inser.php--------------
+<form action="" method="post">
+    Username: <input type="text" name="username"><br>
+    Password: <input type="password" name="pword"><br>
+    Comment: <input type="text" name="comment"><br>
+    <input type="submit" name="submit" value="Submit">
+    
+</form>
+    
+</body>
+</html>
+
+
+<?php
+
+        $server="localhost";
+        $db_username="root";
+        $db_password="1234";
+        $db_name="exam";
+
+        $conn = new mysqli($server, $db_username, $db_password, $db_name) or die(mysqli_error($con));
+
+        if($_SERVER['REQUEST_METHOD'] == 'POST'){
+
+             
+            $data1=$_POST['username'];
+            $data2 = $_POST['pword'];  
+            $data3 = $_POST['comment']; 
+
+            $sql = "INSERT INTO post (username, pword, comment) VALUES ('$data1', '$data2', '$data3')";
+
+            $results = $conn->query($sql); 
+
+            if (mysqli_query($conn, $sql) == true) {
+                echo "New record has been added successfully !";
+            } else {
+                echo "Error: ".mysqli_error($conn);
+            }
+       } 
+      // mysql_close($conn);
+?>
+
+
+----------Re-captca-------------------
+<--recaptcha-->
+ <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+ <div class="g-recaptcha" data-sitekey="sitekey"></div>
+<--recaptcha-->
