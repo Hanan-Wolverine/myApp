@@ -1,0 +1,197 @@
+
+Lab note for IPSec
+Set up a sample network as below
+PC1 – IP address: 192.168.1.10
+Gateway: 192.168.1.1
+PC2 – IP address: 192.168.1.20
+Gateway: 192.168.1.1
+PC3 – IP address: 192.168.2.10
+Gateway: 192.168.2.1
+PC4 – IP address: 192.168.2.20
+Gateway: 192.168.2.1
+R1 – Gig 0/0 IP address 192.168.1.1
+R1 – Gig 0/1 IP address 10.10.10.1 (interface connected R2)
+R2 – Gig 0/0 IP address 192.168.2.1
+R2 – Gig 0/1 IP address 10.10.10.2 (interface connected R1)
+
+Steps to configuring IPSec VPN tunnel
+1.Check required security modules are installed in the device
+2.Permit protocols required for IPSec VPN
+3.Define the interesting traffic to pass through the tunnel
+4.Create ISAKMP (IKE) policy to establish the phase 1 tunnel
+5.Configure IPSec transform set (parameters IPSec users to protect data)
+6.Create cypto map
+7.Apply crypto map to interface
+
+1.Check for security module
+Check the routers are enabled with security module using #show version command. If security is not enabled, install security module using the below command
+
+R(config)# license boot module c2900 technology-package securityk9
+Save the configuration and reload the router
+
+2.Permit protocols required for IPSec VPN
+ISAKMP – UDP port 500
+Non-ISAKMP- UDP port 4500
+Phase 2 ESP Protocol 50
+Phase 2 AH Protocol 51
+
+access-list 110 permit udp host 10.10.10.2 host 10.10.10.1 eq isakmp
+access-list 110 permit udp host 10.10.10.2 host 10.10.10.1 eq non500-isakmp
+access-list 110 permit ahp host 10.10.10.2 host 10.10.10.1
+access-list 110 permit esp host 10.10.10.2 host 10.10.10.1
+
+Interface Gig 0/1
+IP access-group 110 in
+
+Reverse the access list and repeat the steps in Router 2
+
+3.Define the interesting traffic to pass through the tunnel
+
+access-list 120 permit ip 192.168.1.0 0.0.0.255 192.168.2.0 0.0.0.255
+
+implement a mirror image crypto ACL in the router B
+
+4.Create ISAKMP (IKE) policy to establish the phase 1 tunnel
+Define the isakmp policy
+
+Crypto isakmp policy 50
+Encryption aes 128
+Authentication pre-share
+Group 5
+Lifetime 86400
+Hash sha
+
+Configure the pre-shared key
+Crypto isakmp key seuslipsec2022 address 10.10.10.2 (if pre-shared is used)
+
+5.Configure IPSec transform set
+Crypto ipsec transform-set SEUSL-TS esp-aes esp-sha-hmac
+
+6.Create cypto map
+Crypto map SEUSL-MAP 20 ipsec-isakmp
+Match address 120
+Set transform-set SEUSL-TS
+Set peer 10.10.10.2
+Set security-association lifetime seconds 86400
+
+7.Apply crypto map to interface
+Interface Gig 0/1 (traffic exit interface)
+Crypto map SEUSL-MAP
+
+Commands to check your configuration
+Show crypto isakmp policy
+Show crypto ipsec transform set
+Show crypto map
+Show access-list
+
+Commands to check established sa
+Show crypto isakmp sa
+Show crypto ipsec sa
+
+Debug commands
+Debug crypto isakmp
+Debug crypto ipsec
+---------------------------------------------------------------------------------------
+
+1. Access basics
+a) Verify the differences between
+Enable password & service password-encryption
+
+b) Enable secret (Configure enable secret in the switch ciscoE)
+
+c) Create local user on the device
+Username admin secret ciscoL
+
+d) Create a key pair for SSH communication
+Crypto key generate RSA
+
+e) Enable ssh login into line vty 0 4
+transport input ssh
+
+login local (to enable user database)
+
+2. AAA basic
+a) aaa new-model (to enable new aaa model)
+
+b) aaa authentication login default local (define a default method list)
+test login to console and terminal
+
+c) Create a list name none for no authentication apply it to console
+aaa authentication login FREE-LOGIN none (create an authentication method for console)
+
+d) Apply FREE-LOGIN to consile
+line console 0
+login authentication FREE-LOGIN
+
+3) Configure TACACS
+a) configure AAA server
+Configure TACACS with the following parameter
+Service TACACS
+client name: SW2
+IP: 192.168.0.100
+secret: ciscoS
+
+b) Configure the below on the switch SW2
+Change host name to SW2
+Assign IP address 192.168.0.100
+Interface VLAN 1
+IP address 192.168.0.100 255.255.255.0
+
+c) Check the connectivity between switch and TACACS server
+
+d) Assign a domain name
+ip domain-name seusl.lk
+
+e) Define TACACS server on the Switch
+tacacs-server host 192.168.0.101 key ciscoS
+
+f) define list name TAC-LOGIN
+aaa authentication login TAC-LOGIN group tacacs+ local
+
+g) Apply TAC login to line VTY 0 4
+
+3. Authorization basics
+Explore show privilege command
+enable secret level 2 cisco2
+privilege exec level 2 show
+
+-------------------------------------------------------------------------------------
+Procedure 1
+Type show port-security to check for any preconfigured port security
+Configure port security on port fastethernet 0/1 for a MAC address 0010.A55F.BCD6
+
+a) Go to interface command mode
+Switch(config)# interface fastethernet 0/1
+Type the below commands
+Switch(config-if)# switchport mode access
+Switch(config-if)# switchport port-security
+Switch(config-if)# switchport port-security mac-address 0010.A55F.BCD6
+Switch(config-if)# switchport port-security violation restrict
+
+b) Ping from PC1 to PC3 and see the output from show port-security
+
+c) Now change the violation action to shutdown and see switch console and show port-security output
+
+d) Change port security mac-address to the address of PC1
+Switch(config-if)# no switchport port-security mac-address 0010.A55F.BCD6
+Switch(config-if)# switchport port-security mac-address 0001.C77A.D5C5
+
+Procedure 2
+a) Configure port security on interface fastethernet 0/2 to sticky learn the MAC address
+Switch(config)# interface fastethernet 0/2
+Switch(config-if)# switchport mode access
+Switch(config-if)# switchport port-security
+Switch(config-if)# switchport port-security mac-address sticky
+Switch(config-if)# switchport port-security violation restrict
+
+b) Verify with show port-security address and show run
+c) Remove the sticky learned address using no switchport port-security mac-address sticky MAC address
+
+d) Configure a static MAC address (a random one) and try the connectivity between PC2 and other desktops
+
+Procedure 3
+a) Connect a desktop (PC4) to switch one and test the connectivity
+
+b) Configure fastethernet 0/1 on switch SW2 to limit the port security mac address to three using command switchport port-security maximum 3
+
+c) Make the port fastethernet 0/1 to learn PC1, PC2 and MAC address of the SW1. Test the restriction by trying to learn one more MAC address (PC3) and verify the result
