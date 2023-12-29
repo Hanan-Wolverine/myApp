@@ -1,0 +1,17 @@
+01. user@ubuntu: sudo apt-get install apache2 apache2-doc apache2-utils openssl
+
+02. user@ubuntu: check http://localhost & https://localhost
+
+03. user@ubuntu: sudo mkdir /etc/apache2/ssl
+
+04. user@ubuntu:/etc/apache2$  sudo openssl req –x509 –nodes –days 365 –newkey rsa:2048 –keyout /etc/apache2/ssl/apache.key –out /etc/apache2/ssl/apache.cert
+
+05. user@ubuntu:/etc/apache2/mods-available$ sudo a2enmod ssl
+
+06. user@ubuntu:/etc/apache2/sites-available$ sudo vim default-ssl.conf
+
+SSLCertificateFile	/etc/apache2/ssl/apache.cert
+SSLCertificateKeyFile	/etc/apache2/ssl/apache.key
+
+07. user@ubuntu:/etc/apache2/sites-available$ sudo a2ensite default-ssl.conf
+08. user@ubuntu:/etc/apache2/sites-available$ systemctl reload apache2 
